@@ -1,0 +1,185 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>God's Eye View — golden globe</title>
+<script src="./maplibre/engine-switch.js?v=20261115-3dok"></script>
+<link rel="icon" href="./golden-temple-medallion.jpg" />
+<link rel="stylesheet" href="./maplibre/maplibre-gl.css" />
+<style>
+  html, body { margin: 0; height: 100%; background: #05070d; font: 12px system-ui; overflow: hidden; }
+  #photoreal { position: absolute; inset: 0; z-index: 0; background: transparent; opacity: 0; transition: opacity .6s ease; }
+  #map { position: absolute; inset: 0; z-index: 1; }
+  #map canvas { background: transparent !important; }
+  #dawn-gl { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+  #hud { position: absolute; z-index: 9; left: 10px; top: 10px; color: #cfe; font: 12px ui-monospace, monospace; background: #000a; padding: 6px 9px; border-radius: 6px; max-width: 46vw; }
+  #hud.bad { background: #5b1111; color: #ffe8e8; }
+  #panel { position: absolute; z-index: 10; right: 10px; top: 10px; bottom: 10px; width: 292px; overflow-y: auto; background: #070d14f2; border: 1px solid #1d2b3a; border-radius: 10px; padding: 10px; box-sizing: border-box; color: #d7e3ef; }
+  #panel h1 { font-size: 13px; margin: 2px 0 8px; color: #ffd98a; font-weight: 700; letter-spacing: .3px; }
+  #panel .sub { color: #7f93a6; font-size: 11px; margin-bottom: 8px; line-height: 1.35; }
+  .row { display: flex; align-items: center; gap: 7px; padding: 3px 2px; border-radius: 6px; cursor: pointer; user-select: none; }
+  .row:hover { background: #13202d; }
+  .row input { accent-color: #ffd166; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; border: 1px solid #0006; }
+  .nm { flex: 1; font-size: 11.5px; line-height: 1.25; }
+  .ct { color: #8fa7bd; font-size: 10.5px; font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+  .sep { border-top: 1px solid #1d2b3a; margin: 7px 0; }
+  .modeRow { display: flex; gap: 5px; margin: 4px 0 2px; }
+  .modeBtn { flex: 1; padding: 5px 2px; background: #12222f; color: #a9c3d8; border: 1px solid #24405a; border-radius: 6px; cursor: pointer; font-size: 10.5px; }
+  .modeBtn.active { background: #2b587c; color: #eaf6ff; border-color: #5fa3d6; }
+  #allbtn { width: 100%; margin-top: 6px; padding: 6px; background: #16324a; color: #cfe9ff; border: 1px solid #2b587c; border-radius: 6px; cursor: pointer; font-size: 11.5px; }
+  .foot { color: #64798d; font-size: 10px; margin-top: 8px; line-height: 1.4; }
+  .grp { margin: 9px 2px 3px; color: #ffd98a; font-size: 10.5px; font-weight: 700; letter-spacing: .9px; text-transform: uppercase; border-top: 1px solid #1d2b3a; padding-top: 7px; }
+  .tslider { display: flex; align-items: center; gap: 6px; padding: 0 2px 4px 22px; color: #9fb4c8; font-size: 10px; }
+  .tslider input { flex: 1; accent-color: #ffd166; }
+  #nonebtn { width: 100%; margin-top: 5px; padding: 5px; background: #1a1f28; color: #c9d4de; border: 1px solid #2b3a4c; border-radius: 6px; cursor: pointer; font-size: 11px; }
+  details.cg { margin: 6px 0 4px; padding: 6px 8px; border: 1px solid #3a2f17; border-radius: 8px; background: #120e06cc; }
+  details.cg summary { cursor: pointer; color: #ffe2a8; font-size: 11.5px; font-weight: 700; }
+  .cg-legend { margin-top: 5px; font-size: 10.5px; color: #d7c9ab; line-height: 1.5; }
+  .cg-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .cg-legend span { color: #8f8466; }
+  .cg-stats { margin-top: 6px; font-size: 10.5px; color: #d7e3ef; line-height: 1.45; }
+  .cg-stats .cg-h { margin-top: 5px; color: #ffd98a; font-weight: 600; }
+  .cg-stats .cg-fly { cursor: pointer; color: #ffe6b0; }
+  .cg-stats .cg-fly:hover { text-decoration: underline; }
+  .cg-stats .cg-warn { margin: 4px 0; color: #ffb4a8; font-weight: 600; }
+  .cg-stats .cg-note { margin-top: 5px; color: #8fa7bd; font-size: 10px; }
+  .cg-stats .cg-credit { margin-top: 6px; color: #ffd693; font-size: 10px; letter-spacing: .4px; }
+  .row.gold { background: linear-gradient(90deg, rgba(255,209,102,.16), rgba(168,85,247,.10)); border: 1px solid rgba(255,209,102,.45); border-radius: 6px; }
+  .row.gold .nm { color: #ffe2a8; font-weight: 600; }
+  .cg-stats .cg-sub { margin: 2px 0; color: #cdbf9f; font-size: 10px; }
+  .cg-stats .cg-gs { margin: 3px 0; padding: 3px 4px; border-left: 3px solid #a855f7; background: rgba(168,85,247,.08); border-radius: 4px; }
+  .cg-stats .cg-n2yo { margin-top: 2px; font-size: 9.5px; padding: 1px 6px; border-radius: 4px; border: 1px solid #ffd166; background: rgba(255,209,102,.12); color: #ffe2a8; cursor: pointer; }
+  .cg-stats .cg-n2yo-out { font-size: 10px; color: #d7e3ef; }
+  .cg-stats .cg-n2yo-out span { color: #9fb3c4; }
+  .liveDot { width: 7px; height: 7px; border-radius: 50%; background: #46e08a; box-shadow: 0 0 6px #46e08a88; flex: 0 0 auto; }
+  /* post-dawn card: the actual 3D map opens from here */
+  #open3d { position: absolute; z-index: 40; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  #open3d[hidden] { display: none; }
+  #open3d .card-inner { pointer-events: auto; width: min(360px, calc(100vw - 40px)); padding: 14px 16px 16px; text-align: center; color: #f5e7c8;
+    background: linear-gradient(150deg, rgba(24, 17, 7, .96), rgba(10, 8, 4, .96)); border: 1px solid rgba(255, 214, 140, .55); border-radius: 14px;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, .7), 0 0 40px rgba(255, 190, 95, .18); animation: cardIn .6s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+  #open3d .card-photo { width: 100%; height: 170px; object-fit: cover; object-position: center 42%; border-radius: 9px; border: 1px solid rgba(255, 226, 160, .5); box-shadow: 0 0 22px rgba(255, 190, 90, .35); }
+  #open3d .card-title { margin-top: 11px; font: 600 13px/1.3 system-ui, sans-serif; letter-spacing: 2.6px; color: #ffe6b0; text-shadow: 0 0 14px rgba(255, 180, 70, .8); }
+  #open3d .card-sub { margin-top: 5px; font: 500 11px/1.4 system-ui, sans-serif; letter-spacing: .08em; color: #cbb28a; }
+  #open3dBtn { margin-top: 12px; padding: 11px 26px; font: 600 14px/1 system-ui, sans-serif; letter-spacing: .1em; color: #2a1c06;
+    background: linear-gradient(180deg, #ffe2a8, #e5b25f); border: 1px solid #fff2cf88; border-radius: 999px; cursor: pointer; box-shadow: 0 8px 26px rgba(255, 190, 105, .35); }
+  #open3dBtn:hover { filter: brightness(1.07); }
+  #open3d .card-info { display: inline-block; margin-top: 11px; color: #e8c98d; font: 500 11.5px/1 system-ui, sans-serif; letter-spacing: .06em; }
+</style>
+<style>
+    #gev-intro{position:fixed;inset:0;z-index:9000;pointer-events:none;
+      display:flex;align-items:center;justify-content:center;overflow:hidden;
+      background:radial-gradient(circle at 50% 50%,#0b1118 0%,#05070c 55%,#020305 100%)}
+    #gev-intro.gev-out{opacity:0}
+    #gev-intro{transition:opacity 900ms ease}
+    #gev-intro .gev-wave{position:absolute;left:50%;top:50%;width:84vmin;height:84vmin;
+      margin:-42vmin 0 0 -42vmin;border-radius:50%;will-change:opacity;opacity:.6;
+      animation:gevGlow 5200ms ease-in-out infinite;
+      background:radial-gradient(circle,rgba(255,226,170,.30) 0%,rgba(255,196,110,.12) 38%,rgba(255,175,70,0) 70%)}
+    #gev-intro .gev-core{position:relative;display:flex;flex-direction:column;align-items:center;
+      gap:11px;animation:gevPulse 3400ms ease-in-out infinite}
+    #gev-intro .gev-globe-preview{position:relative;width:clamp(176px,26vw,286px);aspect-ratio:1;border-radius:50%;overflow:hidden;
+      background:radial-gradient(circle at 36% 32%,#3d6078 0%,#18344b 46%,#071320 76%);
+      box-shadow:0 0 26px 10px rgba(85,151,199,.20),0 0 86px 36px rgba(255,170,60,.12),inset -24px -10px 40px rgba(0,0,0,.62);
+      isolation:isolate;transform:translateZ(0)}
+    #gev-intro .gev-globe-texture{position:absolute;left:0;top:0;width:400%;height:100%;
+      background-image:var(--gev-marble-preview,radial-gradient(circle at 40% 40%,#577a8d,#0a1724));
+      background-size:50% 100%;background-position:left center;background-repeat:repeat-x;
+      filter:saturate(1.13) contrast(1.06);transform:translate3d(-22.9%,0,0);will-change:transform;
+      animation:gevGlobeTurn 44s linear infinite}
+    #gev-intro .gev-globe-preview::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+      background:radial-gradient(ellipse at 32% 30%,rgba(255,255,255,.12),transparent 38%),
+        radial-gradient(ellipse at 38% 45%,transparent 42%,rgba(1,8,17,.68) 100%);
+      box-shadow:inset 7px 1px 16px rgba(191,224,255,.12),inset -16px -5px 32px rgba(0,0,0,.55)}
+    #gev-intro .gev-temple-pin{position:absolute;z-index:2;left:35.4%;top:32.4%;width:clamp(38px,5vw,54px);height:auto;
+      border-radius:50%;border:1px solid rgba(255,226,160,.95);box-shadow:0 0 15px 5px rgba(255,190,90,.5);transform:translate(-50%,-50%)}
+    #gev-intro .gev-globe-seed{position:absolute;z-index:1;left:35.4%;top:32.4%;width:60px;height:60px;border-radius:50%;transform:translate(-50%,-50%);
+      background:radial-gradient(circle,rgba(255,240,191,.55),rgba(255,180,65,.18) 35%,transparent 72%);pointer-events:none}
+    #gev-intro .gev-label{font:600 12px/1 system-ui,-apple-system,'Segoe UI',sans-serif;
+      letter-spacing:3.2px;color:#ffe6b0;text-shadow:0 0 16px rgba(255,180,70,.9)}
+    #gev-intro .gev-grace{font:500 10.5px/1 system-ui,-apple-system,'Segoe UI',sans-serif;
+      letter-spacing:2.6px;text-transform:uppercase;color:#ffd693;opacity:.9}
+    #gev-intro .gev-project{font:700 clamp(15px,2.2vw,21px)/1 system-ui,-apple-system,'Segoe UI',sans-serif;
+      letter-spacing:5px;text-transform:uppercase;color:#fff3d6;text-shadow:0 0 24px rgba(255,180,70,.8)}
+    #gev-intro .gev-meaning{margin-top:5px;font:500 10.5px/1 system-ui,-apple-system,'Segoe UI',sans-serif;
+      letter-spacing:3.4px;text-transform:uppercase;color:#ffd693;opacity:.88}
+    #gev-intro .gev-hint{display:inline-block;margin-top:2px;padding:7px 12px;border-radius:10px;border:1px solid rgba(255,206,120,.3);background:rgba(255,196,95,.06);color:#ffe6b0;letter-spacing:1.1px;font-size:9px;text-transform:uppercase;text-decoration:none;pointer-events:auto;cursor:pointer}
+    #gev-intro .gev-enter{pointer-events:auto;cursor:pointer;border:1px solid rgba(255,206,120,.65);border-radius:999px;padding:12px 22px;color:#ffe6b0;background:rgba(255,196,95,.14);font:600 10px/1 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;transition:background .2s ease,transform .2s ease,opacity .2s ease}
+    #gev-intro .gev-enter:hover:not(:disabled){background:rgba(255,196,95,.26);transform:translateY(-1px)}
+    #gev-intro .gev-enter:focus-visible{outline:2px solid #fff1ca;outline-offset:4px}
+    #gev-intro .gev-enter:disabled{cursor:wait;opacity:.72}
+    #gev-intro .gev-loading{min-height:1.4em;color:#ffe6b0;font:500 10px/1.4 system-ui,sans-serif;letter-spacing:.1em}
+    #gev-intro .gev-preview-note{color:rgba(220,229,238,.56);font:400 9px/1.4 system-ui,sans-serif;letter-spacing:.06em;text-align:center;max-width:80vw}
+    @keyframes gevGlobeTurn{from{transform:translate3d(-22.9%,0,0)}to{transform:translate3d(-72.9%,0,0)}}
+    #gev-intro.gev-loading .gev-wave{animation:gevLaunchWave 5s cubic-bezier(.16,.84,.28,1) forwards}
+    #gev-intro .gev-stats{font:400 11.5px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;
+      letter-spacing:.3px;color:rgba(255,230,176,.78);max-width:78vw;text-align:center}
+    @keyframes gevGlow{0%,100%{opacity:.55}50%{opacity:.85}}
+    @media (prefers-reduced-motion: reduce){#gev-intro .gev-wave,#gev-intro .gev-core,#gev-intro .gev-globe-texture{animation:none}}
+    @keyframes gevLaunchWave{from{transform:scale(.12);opacity:.65}to{transform:scale(7);opacity:0}}
+    @keyframes gevPulse{0%,100%{opacity:.93}50%{opacity:1}}
+  /* search */
+  .searchRow { position: relative; margin: 2px 0 6px; }
+  .searchRow input { width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 6px; border: 1px solid #2a3c50; background: #0b1520; color: #e6eef6; font: 12px system-ui; }
+  .searchRow input:focus { outline: 1px solid #ffd166; }
+  .searchOut { max-height: 220px; overflow-y: auto; }
+  .searchHit { padding: 4px 6px; border-bottom: 1px solid #16222f; cursor: pointer; color: #e6eef6; font-size: 11px; }
+  .searchHit:hover { background: #12202e; }
+  .searchHit span { display: block; color: #8fa7bd; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .searchNote { padding: 3px 6px; color: #8fa7bd; font-size: 10px; }
+  /* live stamps in the gold menu */
+  .cg-upd { color: #8f8466; font-weight: 400; font-size: 9.5px; }
+  .cg-live { color: #4ade80; font-weight: 700; }
+  .cg-stale { color: #fbbf24; font-weight: 700; }
+  .cg-off { color: #8fa7bd; }
+  details.cg > .cg-h { margin-top: 6px; color: #ffd98a; font-weight: 600; font-size: 10.5px; }
+  /* always-visible credit */
+  #gev-credit { position: absolute; z-index: 8; left: 10px; bottom: 8px; color: #ffd693; font: 10.5px system-ui; letter-spacing: .4px; background: #000a; padding: 3px 8px; border-radius: 6px; pointer-events: none; }
+  /* narrow screens: the layer panel becomes a bottom sheet; tap its title to fold it */
+  @media (max-width: 640px) {
+    #panel { left: 6px; right: 6px; top: auto; bottom: 6px; width: auto; max-height: 46vh; }
+    #panel.folded { max-height: 34px; overflow: hidden; }
+    #panel h1 { cursor: pointer; }
+    #panel h1::after { content: '  ▾ tap to fold'; color: #7f93a6; font-weight: 400; font-size: 10px; }
+    #panel.folded h1::after { content: '  ▴ tap for layers'; }
+    #hud { max-width: 70vw; }
+    #gev-credit { bottom: auto; top: 44px; }
+    .maplibregl-ctrl-bottom-right { bottom: calc(46vh + 8px); }
+  }
+  </style>
+</head>
+<body>
+<div id="photoreal"></div>
+<div id="map"></div>
+<div id="dawn-gl"></div>
+<div id="hud">loading manifest…</div>
+<div id="gev-credit">Sarbat Da Bhalla · Done by Guru's Grace</div>
+<div id="panel"><h1>God's Eye View — layers</h1><div class="sub" id="panel-sub">loading…</div><div id="rows"></div></div>
+<div id="gev-intro" role="region" aria-label="Harmandir Sahib introduction">
+      <div class="gev-wave"></div>
+      <div class="gev-core">
+        <div class="gev-globe-preview" role="img" aria-label="Illustrative rotating Earth preview; 3D map and feeds load after entry">
+          <span class="gev-globe-texture" aria-hidden="true">
+            <img class="gev-temple-pin" src="./golden-temple-medallion.jpg" alt="" />
+          </span>
+          <span class="gev-globe-seed" aria-hidden="true"></span>
+        </div>
+        <div class="gev-label">HARMANDIR SAHIB</div>
+        <div class="gev-grace">Done by Guru's Grace</div>
+        <div class="gev-project">Sarbat Da Bhalla</div>
+        <div class="gev-meaning">welfare of all</div>
+        <div class="gev-stats">&#x0A32;&#x0A70;&#x0A17;&#x0A30; &middot; <a href="https://github.com/GurusGrace/gods-eye-globe#sources-and-attribution" target="_blank" rel="noopener" style="pointer-events:auto;color:inherit;text-decoration:underline">Langar: free community meals at Harmandir Sahib, Amritsar</a></div>
+        <button class="gev-enter" type="button">Enter the globe</button>
+        <div class="gev-loading" role="status" aria-live="polite" hidden></div>
+        <div class="gev-preview-note">God's Eye View, open source (<a href="https://github.com/bilawalsidhu/gods-eye-view/blob/main/LICENSE" target="_blank" rel="noopener" style="pointer-events:auto;color:inherit;text-decoration:underline">MIT</a>) · illustrative Earth preview · sources are listed on the <a href="https://github.com/GurusGrace/gods-eye-globe#sources-and-attribution" target="_blank" rel="noopener" style="pointer-events:auto;color:inherit;text-decoration:underline">More information</a> page</div>
+        <a class="gev-hint" target="_blank" rel="noopener" href="https://github.com/GurusGrace/gods-eye-globe#sources-and-attribution">More information &rarr;</a>
+    </div>
+  </div>
+<div id="open3d" hidden><div class="card-inner"><img class="card-photo" src="./golden-temple.jpg" alt="Harmandir Sahib, Amritsar" /><div class="card-title">HARMANDIR SAHIB IS READY</div><div class="card-sub">The golden dawn has crossed the globe</div><button id="open3dBtn">Open the 3D map</button><a class="card-info" href="https://github.com/GurusGrace/gods-eye-globe#sources-and-attribution" target="_blank">More information &rarr;</a></div></div>
+
+<script type="module" src="./maplibre/globe.js?v=20261115-3dok"></script>
+  <script type="module" src="./maplibre/cards.bundle.js?v=20261115-3dok"></script>
+</body>
+</html>
