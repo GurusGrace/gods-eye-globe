@@ -1,0 +1,28 @@
+{
+ "generatedAt": "2026-11-15T00:00:00.000Z",
+ "data": {},
+ "art": {
+  "facility": "assets/healthcare-building-realistic.png",
+  "water": "assets/dam-realistic.png",
+  "network": "assets/network-tower-realistic.png",
+  "gap": "assets/access-gap-realistic.png",
+  "population": "assets/population-realistic.png",
+  "travel": "assets/travel-time-realistic.png",
+  "hazard": "assets/hazard-symbol-realistic.png",
+  "hazard-fire": "assets/hazard-fire.png",
+  "hazard-flood": "assets/hazard-flood.png",
+  "hazard-quake": "assets/hazard-quake.png",
+  "hazard-cyclone": "assets/hazard-cyclone.png",
+  "flame": "assets/fire_3d.png",
+  "censor": "assets/eye_3d.png",
+  "aircraft": "assets/plane_3d.png",
+  "vessel": "assets/ship_3d.png"
+ },
+ "textures": {
+  "marble": "assets/earth-blue-marble-4k.jpg",
+  "night": "assets/earth-night-4k.jpg",
+  "clouds": "assets/nasa-clouds-2048.jpg"
+ },
+ "roads": "https://tiles.openfreemap.org/planet",
+ "glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf"
+}
