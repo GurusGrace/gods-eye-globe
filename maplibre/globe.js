@@ -1,7 +1,7 @@
 import * as maplibregl from './maplibre-gl.mjs';
-import { initPhotoreal } from './photoreal.bundle.js?v=20261115-3dok';
-import * as feeds from './feeds.bundle.js?v=20261115-3dok';
-import { createDawnLayer as createDawn } from './dawn.bundle.js?v=20261115-3dok';
+import { initPhotoreal } from './photoreal.bundle.js?v=20261115-zoomok';
+import * as feeds from './feeds.bundle.js?v=20261115-zoomok';
+import { createDawnLayer as createDawn } from './dawn.bundle.js?v=20261115-zoomok';
 
 /* The golden globe: every bundled CareGap layer from the Cesium app, live
  * feeds, global roads, the approved 3D icons, the golden Harmandir Sahib
@@ -243,7 +243,14 @@ const map = new maplibregl.Map({
       imagery: {
         type: 'raster',
         tiles: ['https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256, maxzoom: 16, attribution: 'Esri World Imagery',
+        /* Measured, not guessed: Esri World_Imagery still returns real tiles
+         * at z17 and z18, and from z19 up it returns the same 2521-byte
+         * "Map data not yet available" placeholder for every tile. A maxzoom
+         * of 16 threw away two usable levels and made deep zoom a 64x
+         * magnification of a single texel - the flat map read as "the tiles
+         * disappeared". 18 is the last real level, so MapLibre stops asking
+         * there and overzooms the sharp tiles instead of the placeholder. */
+        tileSize: 256, maxzoom: 18, attribution: 'Esri World Imagery',
       },
       /* Low-zoom copy of the same imagery, always resident: while the sharp
        * tiles for a new view are still loading (spin, zoom, fly) this is drawn
